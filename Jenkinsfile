@@ -48,7 +48,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'docker build -t sarra/eventsproject:latest .'
+                    sh 'docker build -t sarrasoyah/eventsproject:latest .'
                 }
             }
         }
@@ -56,7 +56,7 @@ pipeline {
         stage('Push Docker Image to DockerHub') {
             steps {
                 sh "echo ${DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${DOCKERHUB_CREDENTIALS_USR} --password-stdin"
-                sh "docker push sarra/eventsproject:latest"
+                sh "docker push sarrasoyah/eventsproject:latest"
             }
         }
 
