@@ -1,5 +1,5 @@
-# Image de base avec Java 17
-FROM openjdk:17-jdk-slim
+FROM openjdk:17-jdk
+
 
 # Dossier de travail dans le conteneur
 WORKDIR /app
