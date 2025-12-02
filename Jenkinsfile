@@ -37,9 +37,11 @@ pipeline {
 
         stage('Upload .jar to Nexus') {
             steps {
-                sh '''
-                mvn deploy -DaltDeploymentRepository=releases::default::http://localhost:8081/repository/mavenreleases/
-                '''
+                withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                    sh '''
+                    mvn deploy -DaltDeploymentRepository=releases::default::http://${NEXUS_USER}:${NEXUS_PASS}@localhost:8081/repository/mavenreleases/
+                    '''
+                }
             }
         }
 
