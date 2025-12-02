@@ -1,4 +1,4 @@
-pipeline {
+pipeline { 
     agent any
 
     tools {
@@ -22,30 +22,24 @@ pipeline {
 
         stage('Build & Test') {
             steps {
-                dir('eventsProject') {
-                    sh 'mvn clean test'
-                    sh 'mvn clean package -DskipTests=false'
-                }
+                sh 'mvn clean test'
+                sh 'mvn clean package -DskipTests=false'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                dir('eventsProject') {
-                    withSonarQubeEnv("${SONARQUBE}") {
-                        sh 'mvn sonar:sonar'
-                    }
+                withSonarQubeEnv("${SONARQUBE}") {
+                    sh 'mvn sonar:sonar'
                 }
             }
         }
 
         stage('Upload .jar to Nexus') {
             steps {
-                dir('eventsProject') {
-                    sh '''
-                    mvn deploy -DaltDeploymentRepository=releases::default::http://localhost:8081/repository/mavenreleases/
-                    '''
-                }
+                sh '''
+                mvn deploy -DaltDeploymentRepository=releases::default::http://localhost:8081/repository/mavenreleases/
+                '''
             }
         }
 
