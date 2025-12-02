@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8
+    container_name: events-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=eventsdb
+      - MYSQL_USER=events
+      - MYSQL_PASSWORD=events
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  events-app:
+    image: sarrasoyah/eventsproject:latest
+    container_name: events-app
+    depends_on:
+      - mysql
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
