@@ -44,8 +44,8 @@ class EventServicesImplTest {
 
         Participant result = eventServices.addParticipant(participant);
 
-        assertSame(participant, result);                  // retourne bien ce que renvoie le repo
-        verify(participantRepository).save(participant);  // save() appelé une fois
+        assertSame(participant, result);
+        verify(participantRepository).save(participant);
     }
 
     // 🔹 Test pour: Event addAffectEvenParticipant(Event event, int idParticipant)
@@ -54,9 +54,8 @@ class EventServicesImplTest {
         Event event = new Event();
         Participant participantFromDb = mock(Participant.class);
 
-        // le repository renvoie un participant existant
         when(participantRepository.findById(1)).thenReturn(Optional.of(participantFromDb));
-        // getEvents() renvoie null -> branche "if (participant.getEvents() == null)"
+        // branche où participant.getEvents() == null
         when(participantFromDb.getEvents()).thenReturn(null);
         when(eventRepository.save(event)).thenReturn(event);
 
@@ -66,6 +65,7 @@ class EventServicesImplTest {
         verify(eventRepository).save(event);
 
         // on capture l'ensemble d'events passé à setEvents()
+        @SuppressWarnings("unchecked")
         ArgumentCaptor<Set<Event>> captor = ArgumentCaptor.forClass(Set.class);
         verify(participantFromDb).setEvents(captor.capture());
         Set<Event> eventsSet = captor.getValue();
@@ -79,7 +79,6 @@ class EventServicesImplTest {
         Participant aParticipant = mock(Participant.class);
         Participant participantFromDb = mock(Participant.class);
 
-        // l'évènement contient un participant avec idPart = 1
         when(aParticipant.getIdPart()).thenReturn(1);
         Set<Participant> participants = new HashSet<>();
         participants.add(aParticipant);
@@ -93,7 +92,6 @@ class EventServicesImplTest {
 
         assertSame(event, result);
         verify(eventRepository).save(event);
-        // on vérifie qu'on a bien appelé setEvents() sur le participant récupéré
         verify(participantFromDb).setEvents(anySet());
     }
 
@@ -116,7 +114,7 @@ class EventServicesImplTest {
         verify(logisticsRepository).save(logistics);
     }
 
-    // 🔹 Test pour: List<Logistics> getLogisticsDates(LocalDate date_debut, LocalDate date_fin)
+    // 🔹 Test pour: List<Logistics> getLogisticsDates(LocalDate startDate, LocalDate endDate)
     @Test
     void getLogisticsDates_shouldReturnOnlyReservedLogistics() {
         LocalDate start = LocalDate.of(2025, 1, 1);
@@ -161,7 +159,7 @@ class EventServicesImplTest {
         when(event.getDescription()).thenReturn("Test Event");
 
         List<Event> events = List.of(event);
-        when(eventRepository.findByParticipants_NomAndParticipants_PrenomAndParticipants_Tache(
+        when(eventRepository.findByParticipantsNomAndParticipantsPrenomAndParticipantsTache(
                 "Tounsi", "Ahmed", Tache.ORGANISATEUR)).thenReturn(events);
 
         eventServices.calculCout();
