@@ -23,15 +23,14 @@ import java.util.Set;
 @Service
 public class EventServicesImpl implements IEventServices {
 
+    private static final String NOT_FOUND_SUFFIX = " not found";
+
     private final EventRepository eventRepository;
     private final ParticipantRepository participantRepository;
     private final LogisticsRepository logisticsRepository;
 
-    // ---------- Méthodes privées utilitaires ----------
+    // ---------- Méthodes utilitaires ----------
 
-    /**
-     * Attache un event à un participant en gérant la liste events du participant.
-     */
     private void attachEventToParticipant(Event event, Participant participant) {
         if (event == null) {
             throw new IllegalArgumentException("event must not be null");
@@ -47,7 +46,6 @@ public class EventServicesImpl implements IEventServices {
         }
         events.add(event);
 
-        // on persiste la relation côté participant
         participantRepository.save(participant);
     }
 
@@ -62,15 +60,13 @@ public class EventServicesImpl implements IEventServices {
     }
 
     @Override
-    public Event addAffectEvenParticipant(Event event, int idParticipant) {
-        Participant participant = participantRepository.findById(idParticipant)
+    public Event addAffectEvenParticipant(Event event, int participantId) {
+        Participant participant = participantRepository.findById(participantId)
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "Participant with id " + idParticipant + " not found"));
+                        "Participant with id " + participantId + NOT_FOUND_SUFFIX));
 
-        // Met à jour la relation côté participant
         attachEventToParticipant(event, participant);
 
-        // Met à jour la relation côté event (bidirectionnelle)
         Set<Participant> participants = event.getParticipants();
         if (participants == null) {
             participants = new HashSet<>();
@@ -89,7 +85,6 @@ public class EventServicesImpl implements IEventServices {
 
         Set<Participant> participants = event.getParticipants();
         if (participants == null || participants.isEmpty()) {
-            // aucun participant à affecter, on sauvegarde juste l'event
             return eventRepository.save(event);
         }
 
@@ -98,28 +93,27 @@ public class EventServicesImpl implements IEventServices {
         for (Participant p : participants) {
             Participant managedParticipant = participantRepository.findById(p.getIdPart())
                     .orElseThrow(() -> new IllegalArgumentException(
-                            "Participant with id " + p.getIdPart() + " not found"));
+                            "Participant with id " + p.getIdPart() + NOT_FOUND_SUFFIX));
 
             attachEventToParticipant(event, managedParticipant);
             managedParticipants.add(managedParticipant);
         }
 
-        // on remplace par les entités "managées" (récupérées depuis la DB)
         event.setParticipants(managedParticipants);
 
         return eventRepository.save(event);
     }
 
     @Override
-    public Logistics addAffectLog(Logistics logistics, String descriptionEvent) {
+    public Logistics addAffectLog(Logistics logistics, String eventDescription) {
         if (logistics == null) {
             throw new IllegalArgumentException("logistics must not be null");
         }
 
-        Event event = eventRepository.findByDescription(descriptionEvent);
+        Event event = eventRepository.findByDescription(eventDescription);
         if (event == null) {
             throw new IllegalArgumentException(
-                    "Event with description " + descriptionEvent + " not found");
+                    "Event with description " + eventDescription + NOT_FOUND_SUFFIX);
         }
 
         Set<Logistics> logisticsSet = event.getLogistics();
@@ -129,7 +123,6 @@ public class EventServicesImpl implements IEventServices {
         }
         logisticsSet.add(logistics);
 
-        // Sauvegarde des deux côtés
         logisticsRepository.save(logistics);
         eventRepository.save(event);
 
@@ -141,7 +134,6 @@ public class EventServicesImpl implements IEventServices {
         List<Event> events = eventRepository.findByDateDebutBetween(startDate, endDate);
 
         if (events == null || events.isEmpty()) {
-            // On ne retourne jamais null → Sonar content + code plus sûr
             return new ArrayList<>();
         }
 
@@ -150,7 +142,7 @@ public class EventServicesImpl implements IEventServices {
         for (Event event : events) {
             Set<Logistics> logisticsSet = event.getLogistics();
             if (logisticsSet == null || logisticsSet.isEmpty()) {
-                continue; // pas de logistiques pour cet event
+                continue;
             }
 
             for (Logistics logistics : logisticsSet) {
@@ -167,16 +159,16 @@ public class EventServicesImpl implements IEventServices {
     @Override
     public void calculCout() {
         List<Event> events = eventRepository
-                .findByParticipants_NomAndParticipants_PrenomAndParticipants_Tache(
+                .findByParticipantsNomAndParticipantsPrenomAndParticipantsTache(
                         "Tounsi", "Ahmed", Tache.ORGANISATEUR
                 );
 
         if (events == null || events.isEmpty()) {
-            return; // rien à calculer
+            return;
         }
 
         for (Event event : events) {
-            float somme = 0f; // réinitialisée pour chaque event
+            float somme = 0f;
 
             Set<Logistics> logisticsSet = event.getLogistics();
             if (logisticsSet != null && !logisticsSet.isEmpty()) {
